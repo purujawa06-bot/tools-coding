@@ -1,0 +1,5 @@
+{
+  "name": "Offline Coding Assistant",
+  "description": "An offline tool to help developers apply AI-suggested code changes. Users upload a project ZIP, get a text representation for an AI, input the AI's XML response, and download an updated project ZIP with the changes applied.",
+  "requestFramePermissions": []
+}
