@@ -36,9 +36,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ isActive, onZipUpload, projectT
   };
 
   return (
-    <Card step={1} title="Upload Project ZIP" isActive={isActive}>
+    <Card step={1} title="Unggah ZIP Proyek" isActive={isActive}>
       <p className="text-gray-400 mb-4">
-        Select a ZIP file containing your project's source code. The tool will extract all text-based files.
+        Pilih file ZIP yang berisi kode sumber proyek Anda. Alat ini akan mengekstrak semua file berbasis teks.
       </p>
       
       <input
@@ -59,7 +59,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ isActive, onZipUpload, projectT
         <span className="flex items-center space-x-2">
           <UploadIcon />
           <span className="font-medium text-gray-400">
-            {isProcessing ? 'Processing...' : (fileName ? fileName : 'Drop files to attach, or browse')}
+            {isProcessing ? 'Memproses...' : (fileName ? fileName : 'Letakkan file di sini, atau cari')}
           </span>
         </span>
       </label>
@@ -68,7 +68,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ isActive, onZipUpload, projectT
         <div className="mt-6">
            <p className="text-green-400 mb-2 flex items-center justify-center space-x-2">
             <CheckIcon />
-            <span>Project processed successfully!</span>
+            <span>Proyek berhasil diproses!</span>
           </p>
         </div>
       )}

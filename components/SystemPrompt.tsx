@@ -3,36 +3,31 @@ import React, { useState } from 'react';
 import Card from './Card';
 import { CopyIcon, PlayIcon, CheckIcon, DownloadIcon, BackIcon } from './Icons';
 
-const SYSTEM_PROMPT = `You are a world-class senior software engineer. You will receive a project's source code concatenated into a single text block. Each file's content is enclosed by '---START OF [path/to/file]---' and '---END OF [path/to/file]---'.
+const SYSTEM_PROMPT = `Anda adalah seorang senior software engineer kelas dunia. Anda akan menerima kode sumber proyek yang digabung menjadi satu blok teks. Setiap konten file diapit oleh '---START OF [path/to/file]---' dan '---END OF [path/to/file]---'.
 
-Your task is to analyze the user's request and provide the necessary code changes.
+Tugas Anda adalah menganalisis permintaan pengguna dan memberikan perubahan kode yang diperlukan.
 
-YOUR RESPONSE MUST BE IN THE FOLLOWING XML FORMAT. DO NOT ADD ANY OTHER TEXT, EXPLANATION, OR MARKDOWN.
+RESPONS ANDA HARUS DALAM FORMAT BERIKUT. JANGAN TAMBAHKAN TEKS, PENJELASAN, ATAU MARKDOWN LAINNYA.
 
-<changes>
-  <change>
-    <file path="path/to/file.ext" action="add|rewrite|delete|same">
-      <description>A concise, one-sentence explanation of the change to this file.</description>
-      <code><![CDATA[
-<!-- New content for 'add' or 'rewrite'. Leave empty for 'delete' or 'same'. -->
-<!-- ENSURE ALL CODE IS WRAPPED IN CDATA -->
-      ]]></code>
-    </file>
-    <!-- Repeat for every file in the project -->
-</changes>
+Setiap file harus direpresentasikan dalam format ini, diulang untuk setiap file dalam proyek:
+
+@file path/lengkap/ke/file.ext
+@desc Penjelasan singkat satu kalimat tentang perubahan pada file ini.
+@action add|rewrite|delete|same
+
+// Konten kode baru untuk action 'add' atau 'rewrite' diletakkan di sini.
+// Biarkan kosong setelah baris @action untuk 'delete' atau 'same'.
 
 ACTIONS:
-- add: Create a new file. The 'path' must be new.
-- rewrite: Modify an existing file. The full new content must be provided.
-- delete: Remove an existing file.
-- same: The file is unchanged.
+- add: Membuat file baru. 'path' harus baru.
+- rewrite: Mengubah file yang sudah ada. Seluruh konten baru file harus disediakan.
+- delete: Menghapus file yang sudah ada.
+- same: File tidak berubah.
 
-RULES:
-- You must include a <file> tag for EVERY file from the original input.
-- The 'path' attribute must exactly match the path from the input.
-- The <code> content MUST be wrapped in a <![CDATA[...]]> section.
-- Be precise and follow the user's instructions carefully.
-- For rewrites, provide the ENTIRE file content, not just the changed parts.
+ATURAN:
+- Anda harus menyertakan blok (dimulai dengan @file) untuk SETIAP file dari input asli.
+- Atribut 'path' harus sama persis dengan path dari input.
+- Untuk 'rewrite', sediakan SELURUH konten file, bukan hanya bagian yang berubah.
 `;
 
 interface SystemPromptProps {
@@ -53,15 +48,15 @@ const SystemPrompt: React.FC<SystemPromptProps> = ({ isActive, onContinue, onBac
   };
 
   return (
-    <Card step={2} title="Provide Context to AI" isActive={isActive}>
+    <Card step={2} title="Berikan Konteks pada AI" isActive={isActive}>
       <p className="text-gray-400 mb-4">
-        1. Download your project's code, which has been formatted for an AI.
+        1. Unduh kode proyek Anda, yang telah diformat untuk AI.
         <br/>
-        2. Copy the system prompt below and paste it into your AI chat.
+        2. Salin "system prompt" di bawah dan tempelkan ke dalam obrolan AI Anda.
         <br/>
-        3. Upload the downloaded <strong>project.txt</strong> file to the AI.
+        3. Unggah file <strong>project.txt</strong> yang telah diunduh ke AI.
         <br/>
-        4. Add your specific change request (e.g., "add a dark mode toggle").
+        4. Tambahkan permintaan perubahan spesifik Anda (misalnya, "tambahkan tombol mode gelap").
       </p>
 
       {projectText && (
@@ -70,7 +65,7 @@ const SystemPrompt: React.FC<SystemPromptProps> = ({ isActive, onContinue, onBac
           className="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition duration-300 flex items-center justify-center space-x-2 mb-4"
         >
           <DownloadIcon />
-          <span>Download project.txt</span>
+          <span>Unduh project.txt</span>
         </button>
       )}
 
@@ -86,21 +81,21 @@ const SystemPrompt: React.FC<SystemPromptProps> = ({ isActive, onContinue, onBac
           className="w-full bg-gray-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition duration-300 flex items-center justify-center space-x-2"
         >
           <BackIcon />
-          <span>Back</span>
+          <span>Kembali</span>
         </button>
         <button
           onClick={handleCopy}
           className="w-full bg-gray-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition duration-300 flex items-center justify-center space-x-2"
         >
           {copied ? <CheckIcon /> : <CopyIcon />}
-          <span>{copied ? 'Copied!' : 'Copy System Prompt'}</span>
+          <span>{copied ? 'Tersalin!' : 'Salin System Prompt'}</span>
         </button>
         <button
           onClick={onContinue}
           className="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center justify-center space-x-2"
         >
           <PlayIcon />
-          <span>Continue to Next Step</span>
+          <span>Lanjut ke Langkah Berikutnya</span>
         </button>
       </div>
     </Card>

@@ -3,7 +3,7 @@ import React, { useState, useCallback } from 'react';
 import type { AppStep, FileMap, FileChange, ChangeAction } from './types';
 import FileUpload from './components/FileUpload';
 import SystemPrompt from './components/SystemPrompt';
-import XMLInput from './components/XMLInput';
+import AIResponseInput from './components/AIResponseInput';
 import Preview from './components/Preview';
 
 // Allow TypeScript to recognize the JSZip and FileSaver from the CDN
@@ -38,7 +38,7 @@ const App: React.FC = () => {
       let textOutput = '';
       
       const textFileExtensions = ['.js', '.jsx', '.ts', '.tsx', '.html', '.css', '.json', '.md', '.txt', '.py', '.java', '.c', '.cpp', '.h', '.cs', '.go', '.rs', '.php', '.rb', '.yml', '.yaml', '.toml', '.xml', 'Dockerfile', '.env'];
-      const isTextFile = (path: string) => textFileExtensions.some(ext => path.endsWith(ext));
+      const isTextFile = (path: string) => textFileExtensions.some(ext => path.endsWith(ext) || path.includes('.'));
 
       for (const path in zip.files) {
         if (!zip.files[path].dir && isTextFile(path)) {
@@ -51,7 +51,7 @@ const App: React.FC = () => {
       setProjectText(textOutput);
       setCurrentStep('prompt');
     } catch (e) {
-      setError('Failed to process ZIP file. Please ensure it is a valid ZIP archive.');
+      setError('Gagal memproses file ZIP. Pastikan file tersebut adalah arsip ZIP yang valid.');
       console.error(e);
     } finally {
       setIsProcessing(false);
@@ -64,46 +64,49 @@ const App: React.FC = () => {
     saveAs(blob, 'project.txt');
   }, [projectText]);
 
-  const handleXMLSubmit = useCallback((xmlString: string) => {
+  const handleAIResponseSubmit = useCallback((responseText: string) => {
     setError(null);
     try {
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(xmlString, 'application/xml');
-      
-      const parserError = xmlDoc.querySelector('parsererror');
-      if (parserError) {
-        throw new Error(`XML Parsing Error: ${parserError.textContent}`);
-      }
-      
       const parsedChanges: FileChange[] = [];
-      // Fix: Handle different XML structures by reassigning fileNodes if the primary query is empty.
-      let fileNodes = xmlDoc.querySelectorAll('changes > change > file');
-      if (fileNodes.length === 0) { // Fallback for a slightly different structure
-          fileNodes = xmlDoc.querySelectorAll('changes > file');
-      }
+      const fileBlocks = responseText.trim().split('@file').filter(block => block.trim() !== '');
 
+      for (const block of fileBlocks) {
+        const lines = block.trim().split('\n');
+        const path = lines.shift()?.trim();
+        if (!path) continue;
 
-      fileNodes.forEach(node => {
-        const action = node.getAttribute('action') as ChangeAction;
-        const path = node.getAttribute('path');
-        const description = node.querySelector('description')?.textContent?.trim() || null;
-        const code = node.querySelector('code')?.textContent || null;
+        let action: ChangeAction | undefined;
+        let reason: string | null = null;
+        let codeLines: string[] = [];
         
-        if (!action || !path) {
-          console.warn('Skipping file node with missing action or path', node);
-          return;
+        let foundAction = false;
+        for(const line of lines) {
+            if (line.startsWith('@desc')) {
+                reason = line.substring('@desc'.length).trim();
+            } else if (line.startsWith('@action')) {
+                action = line.substring('@action'.length).trim() as ChangeAction;
+                foundAction = true;
+            } else if (foundAction) {
+                codeLines.push(line);
+            }
+        }
+        
+        if (!action) {
+          console.warn('Melewatkan blok tanpa @action untuk file:', path);
+          continue;
         }
 
-        parsedChanges.push({ action, path, reason: description, code });
-      });
+        const code = (action === 'add' || action === 'rewrite') ? codeLines.join('\n') : null;
+        parsedChanges.push({ action, path, reason, code });
+      }
 
       // Validation
       for (const change of parsedChanges) {
         if (change.action === 'add' && originalFiles.has(change.path)) {
-          throw new Error(`Validation Error: Cannot 'add' existing file: ${change.path}`);
+          throw new Error(`Kesalahan Validasi: Tidak dapat 'menambah' file yang sudah ada: ${change.path}`);
         }
         if ((change.action === 'rewrite' || change.action === 'delete') && !originalFiles.has(change.path)) {
-          throw new Error(`Validation Error: Cannot '${change.action}' non-existent file: ${change.path}`);
+          throw new Error(`Kesalahan Validasi: Tidak dapat '${change.action}' file yang tidak ada: ${change.path}`);
         }
       }
       
@@ -131,7 +134,7 @@ const App: React.FC = () => {
       setCurrentStep('preview');
 
     } catch (e: any) {
-      setError(e.message || 'An unexpected error occurred while processing the XML.');
+      setError(e.message || 'Terjadi kesalahan tak terduga saat memproses respons.');
       console.error(e);
     }
   }, [originalFiles]);
@@ -151,10 +154,10 @@ const App: React.FC = () => {
       <div className="max-w-4xl mx-auto">
         <header className="text-center mb-8">
           <h1 className="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
-            Offline Coding Assistant
+            Asisten Coding Offline
           </h1>
           <p className="mt-4 text-lg text-gray-400">
-            A privacy-first tool to apply AI-generated code changes locally.
+            Alat yang mengutamakan privasi untuk menerapkan perubahan kode dari AI secara lokal.
           </p>
         </header>
         
@@ -182,9 +185,9 @@ const App: React.FC = () => {
             projectText={projectText}
             onDownloadProjectTxt={handleDownloadProjectTxt}
           />
-          <XMLInput 
+          <AIResponseInput 
             isActive={currentStep === 'xml'} 
-            onXMLSubmit={handleXMLSubmit}
+            onResponseSubmit={handleAIResponseSubmit}
             onBack={() => setCurrentStep('prompt')}
           />
           <Preview 
@@ -196,7 +199,7 @@ const App: React.FC = () => {
           />
         </main>
         <footer className="text-center mt-12 text-gray-500">
-            <p>&copy; {new Date().getFullYear()} Offline Coding Assistant. All processing is done in your browser.</p>
+            <p>&copy; {new Date().getFullYear()} Asisten Coding Offline. Semua pemrosesan dilakukan di browser Anda.</p>
         </footer>
       </div>
     </div>
